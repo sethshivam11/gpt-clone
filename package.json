@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon server/src/index.js",
     "start": "node server/src/index.js",
-    "build": "npm i && cd client && npm i && npm run build"
+    "build": "npm i && cd client && npm i --production=false && npm run build"
   },
   "keywords": [],
   "author": "shivam",
