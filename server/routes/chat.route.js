@@ -48,22 +48,24 @@ chatRoute.post("/text", verifyJWT, async (req, res) => {
         //     model: "gpt-3.5-turbo",
         // });
 
-        const gptResponse = { choices: ["HI"] }
+        const gptResponse = { choices: ["OpenAI API Error"] }
         let gptReply = gptResponse?.choices[0];
         if (!gptReply) gptReply = "Something went wrong!"
         const date = new Date;
         const promptString = `prompt: ${prompt};time: ${date.toUTCString()}`
         const replyString = `reply: ${gptReply};time: ${date.toUTCString()}`
         if (chatId) {
-            await Chat.findByIdAndUpdate(chatId, {$push: { chats: { $each: [ promptString, replyString ] } } }, { new: true })
+            await Chat.findByIdAndUpdate(chatId, { $push: { chats: { $each: [promptString, replyString] } } }, { new: true })
             return res.status(200).json({
-                success: false,
+                success: true,
                 msg: "Chat saved successfully",
-                reply: gptReply
+                reply: gptReply,
+                chatId,
+                time: date.toUTCString()
             })
         }
         else {
-            await Chat.create({
+            const chat = await Chat.create({
                 user: _id,
                 chats: [promptString, replyString]
             })
@@ -71,6 +73,7 @@ chatRoute.post("/text", verifyJWT, async (req, res) => {
                 success: true,
                 msg: "Chat created successfully",
                 reply: gptReply,
+                chat,
                 time: date.toUTCString()
             })
         }
@@ -94,25 +97,25 @@ chatRoute.post("/audio", async (req, res) => {
                 msg: "Provide a valid input text"
             })
         }
-        const speechFile = path.resolve("../public/temp/speech.mp3");
+        // const speechFile = path.resolve("../public/temp/speech.mp3");
 
-        const mp3 = await openai.audio.speech.create({
-            model: "tts-1",
-            voice: "alloy",
-            input: prompt,
-        })
+        // const mp3 = await openai.audio.speech.create({
+        //     model: "tts-1",
+        //     voice: "alloy",
+        //     input: prompt,
+        // })
 
-        const buffer = Buffer.from(await mp3.arrayBuffer());
-        const speech = await fs.promises.writeFile(speechFile, buffer);
+        // const buffer = Buffer.from(await mp3.arrayBuffer());
+        // const speech = await fs.promises.writeFile(speechFile, buffer);
 
         // let speech = "Audio"
 
         res.status(200).json({
-            success: false,
+            success: true,
             msg: "Audio file generated",
-            audio: speech
+            audio: "OpenAI API Error"
         })
-        return fs.unlinkSync(speechFile)
+        // return fs.unlinkSync(speechFile)
 
     } catch (err) {
         console.log(err)
@@ -128,12 +131,20 @@ chatRoute.post("/audio", async (req, res) => {
 chatRoute.post("/image", async (req, res) => {
     const { prompt } = req.body
 
-    const image = await openai.images.generate({ model: "dall-e-3", prompt });
+    if (!prompt) {
+        return res.status(404).json({
+            success: false,
+            msg: "Provide a valid prompt"
+        })
+    }
+
+    // const image = await openai.images.generate({ model: "dall-e-3", prompt });
+
 
     return res.status(200).json({
-        success: false,
+        success: true,
         msg: "Image generated successfully",
-        image
+        image: "OpenAI API Error"
     })
 })
 
@@ -141,11 +152,26 @@ chatRoute.get("/save/:chatId", verifyJWT, async (req, res) => {
     const { _id } = req.user
     const { chatId } = req.params
 
+    if (!chatId) {
+        return res.status(404).json({
+            success: false,
+            msg: "Provide a valid chatId"
+        })
+    }
+
     try {
+        const alreadyExists = await User.findById(_id);
+        if(alreadyExists.saved.indexOf(chatId) !== -1){
+            return res.status(201).json({
+                success: true,
+                msg: "Chat already saved"
+            })
+        }
+
         const user = await User.findByIdAndUpdate(_id, { $push: { saved: chatId } }, { new: true })
 
         return res.status(200).json({
-            success: false,
+            success: true,
             msg: "Chat saved successfully",
             user
         })

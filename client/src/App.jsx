@@ -6,14 +6,17 @@ import Chats from "./components/Chats";
 import { useCallback, useEffect, useState } from "react";
 import LoginModal from "./components/LoginModal";
 import SignupModal from "./components/SignupModal";
+import toast, { Toaster } from "react-hot-toast";
 
 function App() {
+  const [prompt, setPrompt] = useState("");
+  const [command, setCommand] = useState("text");
+  const [chatId, setChatId] = useState("");
   const [chats, setChats] = useState([]);
   const [history, setHistory] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginModal, setLoginModal] = useState(false);
   const [signupModal, setSignupModal] = useState(false);
-  const [prompt, setPrompt] = useState("");
 
   const fetchHistory = useCallback(() => {
     fetch("/api/v1/chats/history", {
@@ -46,31 +49,49 @@ function App() {
   }, []);
 
   return (
-    <main className="bg-[#0c1525]">
-      {/* <SignupModal
+    <main className="bg-[#0c1525] dark">
+      <Toaster position="bottom-center" />
+      <SignupModal
         register={signupModal}
         setLoginModal={setLoginModal}
         setSignupModal={setSignupModal}
         setIsLoggedIn={setIsLoggedIn}
         fetchHistory={fetchHistory}
-      /> */}
-
-      {/* <LoginModal
+      />
+      <LoginModal
         loginModal={loginModal}
         setSignupModal={setSignupModal}
         setLoginModal={setLoginModal}
         setIsLoggedIn={setIsLoggedIn}
         fetchHistory={fetchHistory}
-      /> */}
+      />
       <Navbar loggedIn={isLoggedIn} />
-      <SideMenu />
+      <SideMenu
+        setLoginModal={setLoginModal}
+        setIsLoggedIn={setIsLoggedIn}
+        setCommand={setCommand}
+        command={command}
+        setHistory={setHistory}
+        chatId={chatId}
+        toast={toast}
+      />
       <Chats
         chats={chats}
         setChats={setChats}
         prompt={prompt}
         setPrompt={setPrompt}
+        command={command}
+        chatId={chatId}
+        setHistory={setHistory}
+        history={history}
+        setChatId={setChatId}
       />
-      <List history={history} setChats={setChats} setPrompt={setPrompt} />
+      <List
+        history={history}
+        setChatId={setChatId}
+        setChats={setChats}
+        setPrompt={setPrompt}
+      />
     </main>
   );
 }
